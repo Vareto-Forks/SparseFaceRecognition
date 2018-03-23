@@ -22,7 +22,7 @@ import functools
 def evaluate_coeff(y,Xtrain,ytrain, clf):
     clf.fit(Xtrain,y)
     x = clf.coef_
-    # On fait la prédiction
+    # We make the prediction
     a = residu(y,Xtrain,x,ytrain)
     b = np.argmin(a)
     c = SCI(x,ytrain)
@@ -48,7 +48,7 @@ def delta(x,i,classs):
     return tmp*x
 
 
-# Définition de la fonction de résidu qui renvoie la classe minimisant l'erreur de reconstruction suivant la norme L2.
+# Definition of the residue function that returns the class minimizing the reconstruction error according to the L2 norm.
 
 def residu(y,A,x,class_x):
     '''
@@ -63,7 +63,7 @@ def residu(y,A,x,class_x):
     return r
 
 
-# Définition de la fonction retournant l'indice de concentration (_Sparsity Concentration Index_)
+# Definition of the function returning the concentration index (_Sparsity Concentration Index_)
 
 
 def SCI(x,classs):
@@ -73,14 +73,14 @@ def SCI(x,classs):
       - x     : sparse coefficients
     '''
     
-    k = len(set(classs)) # Nombre de classes différentes
+    k = len(set(classs)) # Number of different classes
     
     # Puis on retourne la valeur du SCI
     return (k*(1/np.linalg.norm(x,ord=1))*np.max([np.linalg.norm(delta(x,i,classs),ord=1) for i in range(k)]) - 1)/(k-1)
     
 
 
-# **Utilitaire** : trouver la classe d'un élément du test set pour le Yale Database
+# ** Utility **: find the class of a test set item for the Yale Database
 
 
 def find_class(i):
@@ -95,7 +95,7 @@ def noise_image(image_input, per=0.5):
     sz0 = image_input.shape[0]
     sz1 = image_input.shape[1]
     
-    # Création du masque
+    # Mask creation
     nb_pix_to_noise = int(np.floor(per*sz0*sz1))
     
     mask = np.ones((sz0*sz1,1))
@@ -103,10 +103,10 @@ def noise_image(image_input, per=0.5):
     mask[ids] = 0
     mask = np.reshape(mask,(sz0,sz1))
     
-    # Matrice de pixels aléatoires (intensité entre 0 et 255)
+    # Random pixel matrix (intensity between 0 and 255)
     rand_pix = np.random.randint(0,256,size=(sz0,sz1))
     
-    # On retourne la matrice initiale où l'on a changé les pixels indiqués par des pixels aléatoires
+    # We return the initial matrix where we changed the pixels indicated by random pixels
     return np.multiply(mask,image_input) + np.multiply(1-mask,rand_pix)
     
 def black_frame(array_orig, x0, x1, y0, y1):
@@ -132,8 +132,8 @@ def matrix_transform(X):
     
     X_toconcat = [np.reshape(e,(X[0].shape[0]*X[0].shape[1],1)) for e in X]
     
-    # Puis concaténation pour avoir une matrice unique
-    return np.concatenate(X_toconcat,axis=1) # Liste des samples du train, concaténés en colonne.
+    # Then concatenate to have a unique matrix
+    return np.concatenate(X_toconcat,axis=1) # List of the samples of the train, concatenated in column.
     
     
 ###### Algorithme
@@ -148,7 +148,7 @@ def SRC(Xtrain, Xtest, ytrain, type_feature_reduc=None, reduce_lines=12, reduce_
         * pos_occl : position du rectangle pour occlure (xgauche,yhaut,xdroite,ybas)
     '''
     
-    # ---- Définissons les paramètres
+    # ---- Define the parameters
     
     n_train = len(Xtrain)
     n_test = len(Xtest)
@@ -163,43 +163,43 @@ def SRC(Xtrain, Xtest, ytrain, type_feature_reduc=None, reduce_lines=12, reduce_
 
 
 
-    # ---- Dans un premier temps on bruite l'ensemble de test si nécessaire
+    # ---- At first we noised the test set if necessary
     
     if (per_bruit != None):
         tmp = np.copy(Xtest)
         Xtest = [noise_image(e,per=per_bruit) for e in tmp]
 
-    # ---- Ensuite on corrompt l'ensemble de test si nécessaire avec une occlusion
+    # ---- Then we corrupts the test set if necessary with an occlusion
     
     if (pos_occl != None):
         xgauche,yhaut,xdroite,ybas = pos_occl[0],pos_occl[1],pos_occl[2],pos_occl[3]
         tmp = np.copy(Xtest)
         Xtest = [black_frame(e,xgauche,xdroite,ybas,yhaut) for e in tmp]
                  
-    # ---- Transformation en deux matrices plutôt que deux listes de matrices
+    # ---- Transformation into two matrices rather than two matrices lists
     
     Xtrain = matrix_transform(Xtrain)
     Xtest = matrix_transform(Xtest)
     
                  
-    # ---- Normalisation
+    # ---- Normalization
     
     ss = StandardScaler()
-    # Note : on normalise les deux séparéments car on est juste en train de ramener chaque photo à une longueur unité suivant la norme 2
+    # Note: we normalize the two separations because we are just taking each picture back to a unit length following the norm 2
     Xtrain = ss.fit_transform(Xtrain)
     Xtest = ss.fit_transform(Xtest)
 
         
-    # ---- Ensuite on fait une réduction de dimension pour les deux
+    # ---- Then we do a dimension reduction for both
     
-    # Plusieurs cas :
-    # - None (classic) : on resize juste avec nearest
+    # Several cases:
+    # - None (classic): we just resize with nearest
     # - fisherfaces
     # - randomfaces
     # - eigenfaces
     
     
-    # Note : on n'oublie pas de transposer pour pouvoir utiliser les fonctions de features_reduction
+    # Note: we do not forget to transpose to be able to use features_reduction functions
 
     if (type_feature_reduc == 'eigenfaces'):
         Xtrain, Xtest = eigenfaces(Xtrain.T,Xtest.T,n_components=n_components)
@@ -210,33 +210,33 @@ def SRC(Xtrain, Xtest, ytrain, type_feature_reduc=None, reduce_lines=12, reduce_
     elif (type_feature_reduc == 'randomfaces'):
         Xtrain, Xtest = randomfaces(Xtrain.T, Xtest.T, n_components=n_components)
         Xtrain, Xtest = Xtrain.T, Xtest.T
-    else: # Cas classic
-        # On est obligé de réutiliser PIL ici ... donc de reshape à nouvea chaque colonne et d'avoir une liste d'éléments !
+    else: # Classic case
+         # We need to reuse PIL here ... so reshape again each column and have a list of items!
         List_Xtrain, List_Xtest = [], []
     
         for j in range(Xtrain.shape[1]):
             tmp = np.reshape(Xtrain[:,j],(s0,s1))
             im = Image.fromarray(tmp)
-            im = im.resize((reduce_lines,reduce_columns), Image.NEAREST) # Valeurs indiquées en paramètre de la fonction  
+            im = im.resize((reduce_lines,reduce_columns), Image.NEAREST) # Values indicated in parameter of the function
             List_Xtrain.append(np.asarray(im, dtype=np.float64))
         Xtrain = matrix_transform(List_Xtrain)
             
         for j in range(Xtest.shape[1]):
             tmp = np.reshape(Xtest[:,j],(s0,s1))
             im = Image.fromarray(tmp)
-            im = im.resize((reduce_lines,reduce_columns), Image.NEAREST) # Valeurs indiquées en paramètre de la fonction  
+            im = im.resize((reduce_lines,reduce_columns), Image.NEAREST) # Values indicated in parameter of the function 
             List_Xtest.append(np.asarray(im, dtype=np.float64))
         Xtest = matrix_transform(List_Xtest)
     
         
         
-    # ---- Ensuite on applique la minimisation Lasso pour chaque exemple du test set
+    # ---- Then we apply the Lasso minimization for each example of the test set
     
-    # Rappel : 
-    # * y : Elément à tester (est une colonne de Xtest)
-    # * Xtrain : Matrice A des exemples d'entrainement
-    # * x : coefficients issus de la minimisation LASSO
-    # * ytrain : classe des exemples d'entrainement
+    # Recall :
+    # * y: Element to test (is a column of Xtest)
+    # * Xtrain: Matrix A examples of training
+    # * x: coefficients from LASSO minimization
+    # * ytrain: class training examples
 
     
     preds = np.zeros(Xtest.shape[1])
@@ -244,13 +244,13 @@ def SRC(Xtrain, Xtest, ytrain, type_feature_reduc=None, reduce_lines=12, reduce_
     residus = np.zeros((k,Xtest.shape[1]))
 
 
-    # on crée un classifieur Lasso avec le lambda spécifié en paramètre
+    # we create a Lasso classifier with the specified lambda parameter
     clf = Lasso(alpha=lambda_val) 
     
     L_y = []
 
     for j in range(Xtest.shape[1]):
-        L_y.append(Xtest[:,j]) # Exemple courant à tester
+        L_y.append(Xtest[:,j]) # Current example to test
     
     nbCores = multiprocessing.cpu_count()
     pool = Pool(nbCores)
@@ -261,22 +261,22 @@ def SRC(Xtrain, Xtest, ytrain, type_feature_reduc=None, reduce_lines=12, reduce_
       
     
     
-    # Pour chaque exemple à tester on génère les coefficients et on prend la meilleure prédiction
-#    for j in range(Xtest.shape[1]):
-#        y = Xtest[:,j] # Exemple courant à tester
-#        clf.fit(Xtrain,y)
-#        x = clf.coef_
+# For each example to test we generate the coefficients and we take the best prediction
+# for j in range (Xtest.shape [1]):
+# y = Xtest [:, j] # Current example to test
+# clf.fit (Xtrain, y)
+# x = clf.coef_
 #
-#        # On fait la prédiction
-#        residus[:,j] = residu(y,Xtrain,x,ytrain)
-#        preds[j] = np.argmin(residu(y,Xtrain,x,ytrain)) 
-#        rejections[j] = SCI(x,ytrain)
+# # We make the prediction
+# residus [:, j] = residu (y, Xtrain, x, ytrain)
+# preds [j] = np.argmin (residual (y, xtrain, x, ytrain))
+# rejections [j] = SCI (x, ytrain)
     
-    
-    # ---- On renvoie les valeurs ci-dessus
-    
-    # predictions : vecteur des prédictions pour chaque exemple du test set
-    # sci : vecteur des SCI pour chaque élément du test set
-    # residus : matrice des résidus : m lignes (nombre de classes), n colonnes (nombre d'éléments du test set)
+
+    # ---- We return the values above
+
+    # predictions: vector predictions for each example of the test set
+    # sci: ICS vector for each element of the test set
+    # residues: residue matrix: m rows (number of classes), n columns (number of elements of the set test)
     return L
-    #return preds, rejections, residus
+    #return preds, rejections, residues
